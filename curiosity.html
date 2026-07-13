@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Curiosity — a place to study science</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0F1220;
+    --bg-alt: #161A2E;
+    --card: #1B2038;
+    --card-hover: #222846;
+    --text: #ECE8DC;
+    --text-dim: #9BA0BC;
+    --text-faint: #666C8C;
+    --gold: #F2B705;
+    --gold-dim: rgba(242,183,5,0.16);
+    --teal: #52B7A9;
+    --coral: #E8724F;
+    --border: rgba(242,183,5,0.14);
+    --border-soft: rgba(255,255,255,0.08);
+  }
+
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, rgba(242,183,5,0.35), transparent),
+      radial-gradient(1px 1px at 65% 15%, rgba(236,232,220,0.3), transparent),
+      radial-gradient(1.5px 1.5px at 85% 60%, rgba(82,183,169,0.35), transparent),
+      radial-gradient(1px 1px at 40% 80%, rgba(236,232,220,0.25), transparent),
+      radial-gradient(1px 1px at 92% 85%, rgba(242,183,5,0.25), transparent),
+      radial-gradient(1.5px 1.5px at 10% 65%, rgba(236,232,220,0.2), transparent);
+    pointer-events:none;
+    z-index:0;
+  }
+
+  .display{ font-family:'Fraunces', serif; }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  a{ color:inherit; }
+  button{ font-family:inherit; cursor:pointer; }
+
+  .app{ position:relative; z-index:1; max-width:960px; margin:0 auto; padding:0 24px 96px; }
+
+  /* ---------- Header ---------- */
+  header.top{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:28px 0 20px;
+    border-bottom:1px solid var(--border-soft);
+  }
+  .wordmark{
+    display:flex; align-items:center; gap:10px;
+    font-size:22px; font-weight:600; letter-spacing:0.01em; cursor:pointer;
+    background:none; border:none; color:var(--text); padding:0;
+  }
+  .wordmark .spark{
+    width:9px; height:9px; border-radius:50%;
+    background:var(--gold);
+    box-shadow:0 0 0 4px var(--gold-dim);
+  }
+  .progress-pill{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px; color:var(--text-dim);
+    border:1px solid var(--border-soft);
+    padding:6px 12px; border-radius:100px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .progress-pill .dot{ width:6px; height:6px; border-radius:50%; background:var(--teal); }
+
+  /* ---------- Hero / orbit ---------- */
+  .hero{
+    padding:64px 0 40px;
+    display:grid; grid-template-columns:1fr 320px; gap:32px; align-items:center;
+  }
+  .hero h1{
+    font-size:clamp(38px, 5.5vw, 58px);
+    line-height:1.02;
+    margin:0 0 18px;
+    font-weight:600;
+    letter-spacing:-0.01em;
+  }
+  .hero h1 em{
+    font-style:italic; color:var(--gold); font-weight:500;
+  }
+  .hero p{
+    font-size:17px; color:var(--text-dim); line-height:1.6; max-width:46ch; margin:0;
+  }
+  .orbit-wrap{ width:320px; height:320px; position:relative; }
+  .orbit-svg{ width:100%; height:100%; }
+  .orbit-ring{ fill:none; stroke:var(--border-soft); stroke-width:1; }
+  .orbit-node-group{ transform-origin:160px 160px; }
+  .orbit-node{ cursor:pointer; }
+  .orbit-node circle.halo{ opacity:0; transition:opacity .25s ease; }
+  .orbit-node:hover circle.halo{ opacity:1; }
+  .orbit-node text{
+    font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:.04em;
+    fill:var(--text-dim); text-transform:uppercase;
+  }
+  .orbit-core{ fill:var(--gold); }
+  .orbit-core-pulse{
+    fill:none; stroke:var(--gold); stroke-width:1;
+    animation:pulse 3s ease-out infinite;
+    transform-origin:160px 160px;
+  }
+  @keyframes pulse{
+    0%{ opacity:.7; transform:scale(0.4); }
+    100%{ opacity:0; transform:scale(2.2); }
+  }
+  @keyframes spin{
+    from{ transform:rotate(0deg); }
+    to{ transform:rotate(360deg); }
+  }
+  @keyframes spinReverse{
+    from{ transform:rotate(360deg); }
+    to{ transform:rotate(0deg); }
+  }
+  .ring1{ animation:spin 90s linear infinite; }
+  .ring2{ animation:spinReverse 130s linear infinite; }
+
+  /* ---------- Section labels ---------- */
+  .section-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--text-faint);
+    margin:0 0 18px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .section-label::after{
+    content:""; flex:1; height:1px; background:var(--border-soft);
+  }
+
+  /* ---------- Subject cards ---------- */
+  .subjects{
+    display:grid; grid-template-columns:repeat(3, 1fr); gap:16px;
+    margin-bottom:56px;
+  }
+  .subject-card{
+    background:var(--card);
+    border:1px solid var(--border-soft);
+    border-radius:14px;
+    padding:22px 20px;
+    text-align:left;
+    transition:transform .18s ease, background .18s ease, border-color .18s ease;
+  }
+  .subject-card:hover{ background:var(--card-hover); transform:translateY(-2px); border-color:var(--border); }
+  .subject-card .icon{ font-size:22px; margin-bottom:14px; display:block; }
+  .subject-card h3{ font-family:'Fraunces', serif; font-size:19px; margin:0 0 6px; font-weight:600; }
+  .subject-card p{ font-size:13px; color:var(--text-dim); margin:0 0 14px; line-height:1.5; }
+  .subject-card .meta{ font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--text-faint); }
+
+  /* ---------- Topic list ---------- */
+  .breadcrumb{
+    font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--text-faint);
+    display:flex; align-items:center; gap:8px; margin-bottom:24px; background:none; border:none; padding:0;
+  }
+  .breadcrumb button{ background:none; border:none; color:var(--text-dim); font-family:inherit; font-size:12px; padding:0; }
+  .breadcrumb button:hover{ color:var(--gold); }
+
+  .topic-list{ display:flex; flex-direction:column; gap:10px; margin-bottom:40px; }
+  .topic-row{
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--card); border:1px solid var(--border-soft); border-radius:12px;
+    padding:18px 20px; text-align:left; width:100%;
+    transition:background .15s ease, border-color .15s ease;
+  }
+  .topic-row:hover{ background:var(--card-hover); border-color:var(--border); }
+  .topic-row .left{ display:flex; align-items:center; gap:14px; }
+  .topic-row .num{ font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--text-faint); width:22px; }
+  .topic-row h4{ margin:0; font-size:16px; font-weight:600; font-family:'Fraunces', serif; }
+  .topic-row .status{ font-family:'JetBrains Mono', monospace; font-size:11px; }
+  .status.done{ color:var(--teal); }
+  .status.todo{ color:var(--text-faint); }
+
+  /* ---------- Lesson ---------- */
+  .lesson h2{ font-family:'Fraunces', serif; font-size:32px; margin:0 0 6px; font-weight:600; }
+  .lesson .subject-tag{ font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--gold); text-transform:uppercase; letter-spacing:.1em; margin-bottom:14px; display:block; }
+  .lesson .body-text{ font-size:16px; line-height:1.75; color:var(--text); margin-bottom:28px; }
+  .lesson .body-text p{ margin:0 0 16px; }
+  .key-concepts{
+    background:var(--card); border:1px solid var(--border-soft); border-radius:14px;
+    padding:22px 24px; margin-bottom:32px;
+  }
+  .key-concepts .section-label{ margin-bottom:14px; }
+  .key-concepts ul{ margin:0; padding-left:0; list-style:none; }
+  .key-concepts li{
+    font-size:14px; color:var(--text-dim); padding:8px 0 8px 22px; position:relative;
+    border-bottom:1px solid var(--border-soft);
+  }
+  .key-concepts li:last-child{ border-bottom:none; }
+  .key-concepts li::before{
+    content:"→"; position:absolute; left:0; color:var(--gold);
+  }
+  .lesson-actions{ display:flex; gap:12px; }
+
+  .btn{
+    font-family:'JetBrains Mono', monospace; font-size:13px; font-weight:500;
+    padding:13px 24px; border-radius:100px; border:1px solid var(--border-soft);
+    background:transparent; color:var(--text);
+    transition:all .15s ease;
+    display:inline-flex; align-items:center; gap:8px;
+  }
+  .btn:hover{ border-color:var(--gold); color:var(--gold); }
+  .btn.primary{ background:var(--gold); color:#1A1400; border-color:var(--gold); }
+  .btn.primary:hover{ background:#FFC61F; color:#1A1400; }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; }
+
+  /* ---------- Quiz ---------- */
+  .quiz-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:24px; }
+  .quiz-head h2{ font-family:'Fraunces', serif; font-size:26px; margin:0; font-weight:600; }
+  .quiz-progress{ font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--text-faint); }
+
+  .question-card{
+    background:var(--card); border:1px solid var(--border-soft); border-radius:16px;
+    padding:28px; margin-bottom:20px;
+  }
+  .question-card .q-text{ font-size:18px; line-height:1.5; margin:0 0 22px; font-weight:500; }
+  .options{ display:flex; flex-direction:column; gap:10px; }
+  .option{
+    text-align:left; padding:14px 16px; border-radius:10px;
+    border:1px solid var(--border-soft); background:var(--bg-alt);
+    font-size:14px; color:var(--text); display:flex; align-items:center; gap:12px;
+    transition:border-color .12s ease, background .12s ease;
+  }
+  .option .letter{
+    font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--text-faint);
+    width:20px; height:20px; border-radius:50%; border:1px solid var(--border-soft);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .option:hover:not(:disabled){ border-color:var(--gold); }
+  .option.correct{ border-color:var(--teal); background:rgba(82,183,169,0.1); }
+  .option.correct .letter{ background:var(--teal); color:#0A2420; border-color:var(--teal); }
+  .option.incorrect{ border-color:var(--coral); background:rgba(232,114,79,0.1); }
+  .option.incorrect .letter{ background:var(--coral); color:#2A0F06; border-color:var(--coral); }
+  .option:disabled{ cursor:default; }
+
+  .explanation{
+    margin-top:18px; padding-top:18px; border-top:1px solid var(--border-soft);
+    font-size:13.5px; color:var(--text-dim); line-height:1.6;
+  }
+  .explanation strong{ color:var(--text); }
+
+  .quiz-footer{ display:flex; justify-content:flex-end; }
+
+  /* ---------- Results ---------- */
+  .results{ text-align:center; padding:40px 0; }
+  .results .score{ font-family:'Fraunces', serif; font-size:72px; font-weight:600; margin:0; color:var(--gold); }
+  .results .score-label{ font-family:'JetBrains Mono', monospace; font-size:13px; color:var(--text-dim); margin:6px 0 32px; text-transform:uppercase; letter-spacing:.1em; }
+  .results-actions{ display:flex; gap:12px; justify-content:center; }
+
+  footer{
+    text-align:center; padding:40px 0 0; margin-top:40px;
+    border-top:1px solid var(--border-soft);
+    font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--text-faint);
+  }
+
+  .hidden{ display:none !important; }
+
+  @media (max-width: 720px){
+    .hero{ grid-template-columns:1fr; }
+    .orbit-wrap{ width:220px; height:220px; margin:0 auto; }
+    .subjects{ grid-template-columns:1fr; }
+    .lesson-actions{ flex-wrap:wrap; }
+  }
+
+  :focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+
+  @media (prefers-reduced-motion: reduce){
+    .ring1, .ring2, .orbit-core-pulse{ animation:none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <button class="wordmark" onclick="goHome()"><span class="spark"></span>Curiosity</button>
+    <div class="progress-pill"><span class="dot"></span><span id="progressText" class="mono">0 / 6 lessons studied</span></div>
+  </header>
+
+  <!-- HOME VIEW -->
+  <div id="view-home">
+    <section class="hero">
+      <div>
+        <h1>Follow a question<br>wherever it <em>leads</em>.</h1>
+        <p>A quiet place to build real understanding across physics, biology, and chemistry — short lessons, honest quizzes, and a record of what you've actually learned.</p>
+      </div>
+      <div class="orbit-wrap">
+        <svg class="orbit-svg" viewBox="0 0 320 320">
+          <circle class="orbit-ring" cx="160" cy="160" r="140"></circle>
+          <circle class="orbit-ring" cx="160" cy="160" r="95"></circle>
+          <circle class="orbit-core-pulse" cx="160" cy="160" r="14"></circle>
+          <circle class="orbit-core" cx="160" cy="160" r="6"></circle>
+
+          <g class="ring1">
+            <g class="orbit-node" transform="translate(160,20)" onclick="openSubject('physics')">
+              <circle class="halo" r="16" fill="rgba(242,183,5,0.12)"></circle>
+              <circle r="5" fill="#F2B705"></circle>
+              <text y="-12" text-anchor="middle">Physics</text>
+            </g>
+            <g class="orbit-node" transform="translate(281.2,230)" onclick="openSubject('biology')">
+              <circle class="halo" r="16" fill="rgba(82,183,169,0.12)"></circle>
+              <circle r="5" fill="#52B7A9"></circle>
+              <text y="18" text-anchor="middle">Biology</text>
+            </g>
+            <g class="orbit-node" transform="translate(38.8,230)" onclick="openSubject('chemistry')">
+              <circle class="halo" r="16" fill="rgba(232,114,79,0.12)"></circle>
+              <circle r="5" fill="#E8724F"></circle>
+              <text y="18" text-anchor="middle">Chemistry</text>
+            </g>
+          </g>
+        </svg>
+      </div>
+    </section>
+
+    <p class="section-label">Subjects</p>
+    <div class="subjects">
+      <button class="subject-card" onclick="openSubject('physics')">
+        <span class="icon">⚛</span>
+        <h3>Physics</h3>
+        <p>How matter, motion, and energy behave — from a dropped ball to the laws that never break.</p>
+        <span class="meta" data-progress="physics">0 / 2 lessons</span>
+      </button>
+      <button class="subject-card" onclick="openSubject('biology')">
+        <span class="icon">◉</span>
+        <h3>Biology</h3>
+        <p>The machinery of living things, from a single cell to the way it turns light into life.</p>
+        <span class="meta" data-progress="biology">0 / 2 lessons</span>
+      </button>
+      <button class="subject-card" onclick="openSubject('chemistry')">
+        <span class="icon">✦</span>
+        <h3>Chemistry</h3>
+        <p>The rules atoms follow when they meet — what holds them together, and why.</p>
+        <span class="meta" data-progress="chemistry">0 / 2 lessons</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- SUBJECT VIEW -->
+  <div id="view-subject" class="hidden">
+    <div class="breadcrumb"><button onclick="goHome()">Curiosity</button><span>/</span><span id="subjectCrumb"></span></div>
+    <p class="section-label" id="subjectLabel">Topics</p>
+    <div class="topic-list" id="topicList"></div>
+  </div>
+
+  <!-- LESSON VIEW -->
+  <div id="view-lesson" class="hidden">
+    <div class="breadcrumb">
+      <button onclick="goHome()">Curiosity</button><span>/</span>
+      <button id="lessonCrumbSubject" onclick=""></button><span>/</span>
+      <span id="lessonCrumbTopic"></span>
+    </div>
+    <div class="lesson">
+      <span class="subject-tag" id="lessonSubjectTag"></span>
+      <h2 id="lessonTitle"></h2>
+      <div class="body-text" id="lessonBody"></div>
+      <div class="key-concepts">
+        <p class="section-label">Key concepts</p>
+        <ul id="lessonConcepts"></ul>
+      </div>
+      <div class="lesson-actions">
+        <button class="btn" onclick="backToSubject()">Back to topics</button>
+        <button class="btn primary" id="quizBtn" onclick="startQuiz()">Take the quiz →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUIZ VIEW -->
+  <div id="view-quiz" class="hidden">
+    <div class="quiz-head">
+      <h2 id="quizTitle"></h2>
+      <span class="quiz-progress mono" id="quizProgress"></span>
+    </div>
+    <div id="questionArea"></div>
+  </div>
+
+  <!-- RESULTS VIEW -->
+  <div id="view-results" class="hidden">
+    <div class="results">
+      <p class="score" id="resultsScore"></p>
+      <p class="score-label" id="resultsLabel"></p>
+      <div class="results-actions">
+        <button class="btn" onclick="backToSubjectFromResults()">Back to topics</button>
+        <button class="btn primary" onclick="retakeQuiz()">Retake quiz</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>Curiosity — study science, one honest question at a time.</footer>
+</div>
+
+<script>
+/* ---------------- Content ---------------- */
+const CONTENT = {
+  physics: {
+    name: "Physics",
+    topics: {
+      "newtons-laws": {
+        title: "Newton's Laws of Motion",
+        body: [
+          "Isaac Newton's three laws describe how forces govern the motion of every object, from a dropped pencil to a launched rocket. They form the backbone of classical mechanics.",
+          "The first law, often called the law of inertia, says an object at rest stays at rest, and an object in motion stays in motion at a constant velocity, unless acted on by a net external force. Motion doesn't need a cause to continue — it needs a cause to change.",
+          "The second law quantifies this: force equals mass times acceleration (F = ma). A given force accelerates a light object more than a heavy one. This single equation lets you predict exactly how something will move once you know the forces acting on it.",
+          "The third law states that for every action, there is an equal and opposite reaction. When you push on a wall, the wall pushes back on you with equal force — that's why you don't fall through it."
+        ],
+        concepts: [
+          "Inertia: objects resist changes to their state of motion.",
+          "F = ma links force, mass, and acceleration directly.",
+          "Forces always come in equal, opposite pairs between two objects.",
+          "Net force, not just any force, determines whether motion changes."
+        ],
+        quiz: [
+          {
+            q: "A hockey puck slides across frictionless ice at constant speed. According to Newton's first law, what keeps it moving?",
+            options: ["A steady applied force", "Nothing needs to — it continues by inertia", "The ice pushes it forward", "Its own stored energy runs out slowly"],
+            correct: 1,
+            explain: "With no net force acting on it, the puck simply continues at constant velocity — that's the law of inertia in action."
+          },
+          {
+            q: "You push a shopping cart and a loaded truck with the same force. Which accelerates faster?",
+            options: ["The truck, because it's bigger", "The shopping cart, because it has less mass", "Both accelerate the same amount", "Neither accelerates without an engine"],
+            correct: 1,
+            explain: "From F = ma, for the same force, acceleration is inversely proportional to mass. The lighter cart accelerates more."
+          },
+          {
+            q: "When a rocket expels gas downward, it accelerates upward. Which law explains this most directly?",
+            options: ["The first law", "The second law", "The third law", "The law of conservation of mass"],
+            correct: 2,
+            explain: "The rocket pushes gas down, and by Newton's third law, the gas pushes the rocket up with equal and opposite force."
+          },
+          {
+            q: "If the net force on an object is zero, what must be true of its velocity?",
+            options: ["It must be zero", "It must be constant (including possibly zero)", "It must be increasing", "It must be changing direction"],
+            correct: 1,
+            explain: "Zero net force means zero acceleration, so velocity — speed and direction together — stays constant."
+          },
+          {
+            q: "A 2 kg object accelerates at 3 m/s². How much net force is acting on it?",
+            options: ["1.5 N", "5 N", "6 N", "9 N"],
+            correct: 2,
+            explain: "F = ma = 2 kg × 3 m/s² = 6 N."
+          }
+        ]
+      },
+      "energy-conservation": {
+        title: "Energy and Conservation",
+        body: [
+          "Energy is the capacity to do work, and it shows up in many forms: kinetic energy of motion, potential energy of position, thermal energy, and more. What makes energy so useful as a concept is that it's conserved — it can change form, but the total amount in an isolated system never changes.",
+          "Kinetic energy depends on mass and speed: KE = ½mv². Gravitational potential energy depends on mass, height, and gravity: PE = mgh. As an object falls, potential energy converts into kinetic energy, and the sum of the two stays constant if no friction or air resistance acts on it.",
+          "In the real world, energy often 'disappears' from a system as heat, sound, or deformation — but it isn't destroyed, it's just converted into a form that's harder to use for further work. This is why perpetual motion machines are impossible: every real process loses some usable energy to these forms.",
+          "The law of conservation of energy is one of the most tested principles in all of physics, holding true across mechanics, thermodynamics, electromagnetism, and beyond."
+        ],
+        concepts: [
+          "Energy converts between forms but the total is conserved.",
+          "KE = ½mv², PE = mgh for gravitational potential energy.",
+          "Friction and air resistance convert usable energy into heat.",
+          "Conservation of energy rules out perpetual motion machines."
+        ],
+        quiz: [
+          {
+            q: "A ball is dropped from a height and falls freely (no air resistance). As it falls, what happens to its total mechanical energy?",
+            options: ["It increases", "It decreases", "It stays constant", "It converts entirely to heat"],
+            correct: 2,
+            explain: "With no friction or air resistance, potential energy converts to kinetic energy, but the total mechanical energy stays constant."
+          },
+          {
+            q: "A 4 kg object moves at 3 m/s. What is its kinetic energy?",
+            options: ["6 J", "12 J", "18 J", "36 J"],
+            correct: 2,
+            explain: "KE = ½mv² = ½ × 4 × 3² = ½ × 4 × 9 = 18 J."
+          },
+          {
+            q: "Why can't a real machine run forever without an energy input?",
+            options: ["Machines always run out of parts", "Some energy is always lost to friction or heat, reducing usable energy over time", "Energy is destroyed each time it's used", "Gravity eventually stops working on moving parts"],
+            correct: 1,
+            explain: "Real systems always lose some energy to friction, sound, or heat — it isn't destroyed, but it becomes unusable for continuing the motion."
+          },
+          {
+            q: "A roller coaster car is at its highest point on the track, momentarily at rest. Where is its energy at this instant?",
+            options: ["Entirely kinetic", "Entirely potential", "Entirely lost to friction", "Split evenly between kinetic and potential"],
+            correct: 1,
+            explain: "At rest, it has no kinetic energy — all of its mechanical energy at that point is gravitational potential energy."
+          },
+          {
+            q: "Which of these is NOT a form of energy?",
+            options: ["Kinetic energy", "Thermal energy", "Mass", "Potential energy"],
+            correct: 2,
+            explain: "Mass is a property of matter, not itself a form of energy, though mass and energy are related through E = mc²."
+          }
+        ]
+      }
+    }
+  },
+  biology: {
+    name: "Biology",
+    topics: {
+      "cell-structure": {
+        title: "Cell Structure and Function",
+        body: [
+          "The cell is the basic unit of life. Every living thing is made of one or more cells, and each cell contains specialized structures, called organelles, that carry out the jobs necessary to keep it alive.",
+          "The nucleus houses the cell's DNA and acts as its control center, directing which proteins get made and when. Surrounding the cell is the plasma membrane, a selectively permeable barrier that controls what enters and leaves.",
+          "Mitochondria are the cell's power plants, converting nutrients into usable energy in the form of ATP through cellular respiration. Plant cells additionally contain chloroplasts, which capture sunlight to produce their own food, and a rigid cell wall for structural support that animal cells lack.",
+          "Cells are broadly divided into two types: prokaryotic cells (like bacteria), which lack a nucleus and membrane-bound organelles, and eukaryotic cells (like those in plants, animals, and fungi), which have both."
+        ],
+        concepts: [
+          "The nucleus stores DNA and directs cell activity.",
+          "The plasma membrane controls what enters and exits the cell.",
+          "Mitochondria produce ATP, the cell's usable energy currency.",
+          "Eukaryotic cells have a nucleus; prokaryotic cells do not."
+        ],
+        quiz: [
+          {
+            q: "Which organelle is primarily responsible for producing usable energy for the cell?",
+            options: ["Nucleus", "Mitochondria", "Cell wall", "Plasma membrane"],
+            correct: 1,
+            explain: "Mitochondria convert nutrients into ATP through cellular respiration, powering the cell's activities."
+          },
+          {
+            q: "What is the key structural difference between a prokaryotic and a eukaryotic cell?",
+            options: ["Prokaryotic cells are always larger", "Eukaryotic cells have a nucleus; prokaryotic cells do not", "Only prokaryotic cells have a plasma membrane", "Only eukaryotic cells contain DNA"],
+            correct: 1,
+            explain: "Eukaryotic cells enclose their DNA in a membrane-bound nucleus; prokaryotic cells have their DNA free in the cytoplasm."
+          },
+          {
+            q: "Which structure allows a plant cell to make its own food from sunlight?",
+            options: ["Mitochondria", "Nucleus", "Chloroplast", "Cell wall"],
+            correct: 2,
+            explain: "Chloroplasts capture light energy and use it to produce sugars through photosynthesis — a feature plant cells have that animal cells lack."
+          },
+          {
+            q: "What does it mean that the plasma membrane is 'selectively permeable'?",
+            options: ["It lets everything through equally", "It blocks everything from entering or leaving", "It controls which substances can cross it", "It only exists in plant cells"],
+            correct: 2,
+            explain: "Selective permeability means the membrane regulates which molecules can pass, rather than acting as an open gate or a solid wall."
+          },
+          {
+            q: "Which of these structures is found in animal cells but NOT typically in plant cells' defining feature set?",
+            options: ["Nucleus", "Mitochondria", "Rigid cell wall for structure", "Plasma membrane"],
+            correct: 2,
+            explain: "Plant cells have a rigid cell wall for structural support; animal cells do not have this structure."
+          }
+        ]
+      },
+      "photosynthesis-respiration": {
+        title: "Photosynthesis and Cellular Respiration",
+        body: [
+          "Photosynthesis and cellular respiration are, in many ways, mirror images of each other, and together they form the basis of nearly all energy flow in living systems.",
+          "In photosynthesis, plants, algae, and some bacteria use light energy to convert carbon dioxide and water into glucose and oxygen. This happens mainly in the chloroplasts, and the overall reaction can be summarized as: 6CO₂ + 6H₂O + light energy → C₆H₁₂O₆ + 6O₂.",
+          "Cellular respiration runs the reverse direction, breaking glucose down in the presence of oxygen to release energy the cell can use, producing carbon dioxide and water as byproducts: C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + energy (ATP). This happens in the mitochondria of nearly all living cells, including plant cells.",
+          "This cycle is why plants and animals depend on each other at a global scale: plants take in the carbon dioxide that animals exhale and release the oxygen that animals (and plants themselves) need to breathe."
+        ],
+        concepts: [
+          "Photosynthesis converts light energy into chemical energy (glucose).",
+          "Cellular respiration releases that chemical energy as usable ATP.",
+          "Photosynthesis happens in chloroplasts; respiration happens in mitochondria.",
+          "The two processes use each other's products, linking plant and animal life."
+        ],
+        quiz: [
+          {
+            q: "What are the main inputs to photosynthesis?",
+            options: ["Glucose and oxygen", "Carbon dioxide, water, and light energy", "ATP and carbon dioxide", "Oxygen and water only"],
+            correct: 1,
+            explain: "Photosynthesis takes in carbon dioxide, water, and light energy to produce glucose and oxygen."
+          },
+          {
+            q: "Where does cellular respiration mainly take place in a cell?",
+            options: ["Chloroplasts", "Nucleus", "Mitochondria", "Cell wall"],
+            correct: 2,
+            explain: "Cellular respiration takes place in the mitochondria, where glucose is broken down to release usable energy."
+          },
+          {
+            q: "Which gas do animals exhale that plants use as an input for photosynthesis?",
+            options: ["Oxygen", "Nitrogen", "Carbon dioxide", "Hydrogen"],
+            correct: 2,
+            explain: "Animals exhale carbon dioxide, which plants take in and use, along with water and light, to build glucose."
+          },
+          {
+            q: "Which statement best captures the relationship between photosynthesis and respiration?",
+            options: ["They are unrelated processes", "Respiration's products are roughly photosynthesis's reactants, and vice versa", "Both happen only in plants", "Photosynthesis releases energy and respiration stores it"],
+            correct: 1,
+            explain: "The two reactions are near-opposites: what respiration consumes, photosynthesis produces, and vice versa."
+          },
+          {
+            q: "Do plant cells perform cellular respiration?",
+            options: ["No, only animal cells do", "Yes, nearly all living cells, including plant cells, do", "Only at night", "Only when there is no sunlight available"],
+            correct: 1,
+            explain: "Plant cells both photosynthesize and respire — they need ATP from respiration just like animal cells do."
+          }
+        ]
+      }
+    }
+  },
+  chemistry: {
+    name: "Chemistry",
+    topics: {
+      "atomic-structure": {
+        title: "Atomic Structure and the Periodic Table",
+        body: [
+          "Every atom is built from three particles: protons and neutrons packed into a dense central nucleus, and electrons occupying the space around it. Protons carry a positive charge, electrons a negative charge, and neutrons no charge at all.",
+          "An element is defined by its number of protons, called the atomic number. Carbon always has 6 protons; change that number and you have a different element entirely. The number of neutrons can vary between atoms of the same element, producing isotopes.",
+          "The periodic table arranges all known elements by increasing atomic number, and its layout isn't arbitrary — elements in the same column (group) share similar chemical behavior because they have the same number of electrons in their outermost shell.",
+          "This outer shell, the valence shell, determines how an atom interacts with others. Elements on the left tend to lose electrons easily, elements on the right tend to gain them, and the noble gases on the far right have full outer shells and rarely react at all."
+        ],
+        concepts: [
+          "Atoms consist of protons, neutrons, and electrons.",
+          "Atomic number (proton count) defines the element.",
+          "Elements in the same periodic table column share valence electron count.",
+          "Valence electrons determine an atom's chemical behavior."
+        ],
+        quiz: [
+          {
+            q: "What determines which element an atom is?",
+            options: ["Number of neutrons", "Number of electrons only", "Number of protons", "Total atomic mass"],
+            correct: 2,
+            explain: "The number of protons, the atomic number, defines the element. Carbon is always carbon because it always has 6 protons."
+          },
+          {
+            q: "Two atoms of the same element with different numbers of neutrons are called:",
+            options: ["Isomers", "Isotopes", "Ions", "Allotropes"],
+            correct: 1,
+            explain: "Isotopes are atoms of the same element (same proton count) that differ in neutron count."
+          },
+          {
+            q: "Why do elements in the same column of the periodic table behave similarly?",
+            options: ["They have the same atomic mass", "They have the same number of valence electrons", "They were discovered in the same year", "They all have the same number of neutrons"],
+            correct: 1,
+            explain: "Columns group elements with the same number of valence (outer shell) electrons, which drives similar chemical behavior."
+          },
+          {
+            q: "Which particle carries a negative charge?",
+            options: ["Proton", "Neutron", "Electron", "Nucleus"],
+            correct: 2,
+            explain: "Electrons carry a negative charge and occupy the space surrounding the positively charged nucleus."
+          },
+          {
+            q: "Why are noble gases generally unreactive?",
+            options: ["They have no electrons", "Their outer (valence) shell is already full", "They have too many protons", "They only exist at extremely high temperatures"],
+            correct: 1,
+            explain: "Noble gases have a full valence shell, so they have little tendency to gain, lose, or share electrons with other atoms."
+          }
+        ]
+      },
+      "chemical-bonding": {
+        title: "Chemical Bonding",
+        body: [
+          "Atoms bond with each other to reach a more stable electron arrangement, usually by filling their outer valence shell. How they achieve that stability determines the type of bond that forms.",
+          "In an ionic bond, one atom transfers electrons to another entirely. This typically happens between a metal and a nonmetal — sodium gives up an electron to chlorine, creating a positively charged sodium ion and a negatively charged chloride ion that attract each other, forming table salt (NaCl).",
+          "In a covalent bond, atoms share electrons rather than transferring them outright, which is common between two nonmetals. A water molecule (H₂O) forms when oxygen shares electron pairs with two hydrogen atoms. Covalent bonds can be single, double, or triple, depending on how many electron pairs are shared.",
+          "A third type, the metallic bond, occurs in metals, where electrons move relatively freely among a lattice of metal atoms — this 'sea of electrons' is why metals conduct electricity and heat so well, and why they can be bent and shaped without breaking."
+        ],
+        concepts: [
+          "Bonds form so atoms can reach a more stable electron configuration.",
+          "Ionic bonds transfer electrons between atoms (metal + nonmetal).",
+          "Covalent bonds share electrons between atoms (nonmetal + nonmetal).",
+          "Metallic bonds involve a shared 'sea' of electrons across a metal lattice."
+        ],
+        quiz: [
+          {
+            q: "What happens to electrons in an ionic bond?",
+            options: ["They are shared equally between atoms", "They are transferred from one atom to another", "They are removed entirely from both atoms", "They stay fixed in the nucleus"],
+            correct: 1,
+            explain: "In an ionic bond, one atom transfers one or more electrons to another, creating oppositely charged ions that attract each other."
+          },
+          {
+            q: "Which type of bond forms table salt, NaCl?",
+            options: ["Covalent bond", "Metallic bond", "Ionic bond", "Hydrogen bond"],
+            correct: 2,
+            explain: "Sodium transfers an electron to chlorine, forming Na⁺ and Cl⁻ ions that attract each other in an ionic bond."
+          },
+          {
+            q: "In a water molecule, how do oxygen and hydrogen atoms bond?",
+            options: ["By transferring electrons completely", "By sharing electron pairs", "By forming a metallic lattice", "They don't bond; they're just adjacent"],
+            correct: 1,
+            explain: "Oxygen and hydrogen share electron pairs in covalent bonds to form H₂O."
+          },
+          {
+            q: "Why do metals conduct electricity well?",
+            options: ["Their electrons transfer completely to neighboring atoms", "Electrons move relatively freely through a shared 'sea' across the metal lattice", "Metals contain no electrons at all", "Metal atoms don't bond with each other"],
+            correct: 1,
+            explain: "Metallic bonding involves a delocalized 'sea' of electrons that can move freely, which is what allows metals to conduct electricity and heat."
+          },
+          {
+            q: "Ionic bonds most commonly form between which combination of elements?",
+            options: ["Two metals", "Two nonmetals", "A metal and a nonmetal", "Two noble gases"],
+            correct: 2,
+            explain: "Ionic bonds typically form between a metal (which tends to lose electrons) and a nonmetal (which tends to gain them)."
+          }
+        ]
+      }
+    }
+  }
+};
+
+/* ---------------- State ---------------- */
+let progress = {}; // { "physics.newtons-laws": true, ... }
+let currentSubject = null;
+let currentTopic = null;
+let quizState = { index: 0, score: 0, answered: false };
+
+const STORAGE_KEY = "curiosity-progress";
+
+async function loadProgress(){
+  try{
+    if(window.storage){
+      const res = await window.storage.get(STORAGE_KEY, false);
+      if(res && res.value){ progress = JSON.parse(res.value); }
+    }
+  }catch(e){ /* no saved progress yet */ }
+  refreshProgressUI();
+}
+
+async function saveProgress(){
+  try{
+    if(window.storage){
+      await window.storage.set(STORAGE_KEY, JSON.stringify(progress), false);
+    }
+  }catch(e){ console.error("Could not save progress", e); }
+}
+
+function totalLessons(){
+  let n = 0;
+  Object.values(CONTENT).forEach(s => n += Object.keys(s.topics).length);
+  return n;
+}
+function completedLessons(){
+  return Object.values(progress).filter(Boolean).length;
+}
+function refreshProgressUI(){
+  document.getElementById('progressText').textContent = `${completedLessons()} / ${totalLessons()} lessons studied`;
+  Object.keys(CONTENT).forEach(subjectKey => {
+    const topics = CONTENT[subjectKey].topics;
+    const total = Object.keys(topics).length;
+    const done = Object.keys(topics).filter(t => progress[`${subjectKey}.${t}`]).length;
+    const el = document.querySelector(`[data-progress="${subjectKey}"]`);
+    if(el) el.textContent = `${done} / ${total} lessons`;
+  });
+}
+
+/* ---------------- Navigation ---------------- */
+function showView(id){
+  ['view-home','view-subject','view-lesson','view-quiz','view-results'].forEach(v=>{
+    document.getElementById(v).classList.toggle('hidden', v !== id);
+  });
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function goHome(){
+  currentSubject = null; currentTopic = null;
+  showView('view-home');
+}
+
+function openSubject(subjectKey){
+  currentSubject = subjectKey;
+  const subject = CONTENT[subjectKey];
+  document.getElementById('subjectCrumb').textContent = subject.name;
+  document.getElementById('subjectLabel').textContent = subject.name + ' — topics';
+
+  const list = document.getElementById('topicList');
+  list.innerHTML = '';
+  Object.entries(subject.topics).forEach(([key, topic], i) => {
+    const done = !!progress[`${subjectKey}.${key}`];
+    const row = document.createElement('button');
+    row.className = 'topic-row';
+    row.onclick = () => openLesson(subjectKey, key);
+    row.innerHTML = `
+      <span class="left">
+        <span class="num mono">${String(i+1).padStart(2,'0')}</span>
+        <h4>${topic.title}</h4>
+      </span>
+      <span class="status mono ${done ? 'done' : 'todo'}">${done ? '✓ studied' : 'not started'}</span>
+    `;
+    list.appendChild(row);
+  });
+  showView('view-subject');
+}
+
+function openLesson(subjectKey, topicKey){
+  currentSubject = subjectKey;
+  currentTopic = topicKey;
+  const subject = CONTENT[subjectKey];
+  const topic = subject.topics[topicKey];
+
+  document.getElementById('lessonCrumbSubject').textContent = subject.name;
+  document.getElementById('lessonCrumbSubject').onclick = () => openSubject(subjectKey);
+  document.getElementById('lessonCrumbTopic').textContent = topic.title;
+  document.getElementById('lessonSubjectTag').textContent = subject.name;
+  document.getElementById('lessonTitle').textContent = topic.title;
+
+  const bodyEl = document.getElementById('lessonBody');
+  bodyEl.innerHTML = topic.body.map(p => `<p>${p}</p>`).join('');
+
+  const conceptsEl = document.getElementById('lessonConcepts');
+  conceptsEl.innerHTML = topic.concepts.map(c => `<li>${c}</li>`).join('');
+
+  progress[`${subjectKey}.${topicKey}`] = true;
+  saveProgress();
+  refreshProgressUI();
+
+  showView('view-lesson');
+}
+
+function backToSubject(){
+  openSubject(currentSubject);
+}
+function backToSubjectFromResults(){
+  openSubject(currentSubject);
+}
+
+/* ---------------- Quiz ---------------- */
+function startQuiz(){
+  quizState = { index: 0, score: 0, answered: false };
+  document.getElementById('quizTitle').textContent = CONTENT[currentSubject].topics[currentTopic].title;
+  showView('view-quiz');
+  renderQuestion();
+}
+
+function retakeQuiz(){
+  startQuiz();
+}
+
+function renderQuestion(){
+  const topic = CONTENT[currentSubject].topics[currentTopic];
+  const qs = topic.quiz;
+  const q = qs[quizState.index];
+  quizState.answered = false;
+
+  document.getElementById('quizProgress').textContent = `Question ${quizState.index+1} of ${qs.length} · Score ${quizState.score}`;
+
+  const area = document.getElementById('questionArea');
+  const letters = ['A','B','C','D'];
+  area.innerHTML = `
+    <div class="question-card">
+      <p class="q-text">${q.q}</p>
+      <div class="options" id="optionsWrap">
+        ${q.options.map((opt,i) => `
+          <button class="option" data-index="${i}" onclick="selectOption(${i})">
+            <span class="letter">${letters[i]}</span>
+            <span>${opt}</span>
+          </button>
+        `).join('')}
+      </div>
+      <div class="explanation hidden" id="explanationBox"></div>
+    </div>
+    <div class="quiz-footer">
+      <button class="btn primary hidden" id="nextBtn" onclick="nextQuestion()">
+        ${quizState.index === qs.length - 1 ? 'See results →' : 'Next question →'}
+      </button>
+    </div>
+  `;
+}
+
+function selectOption(i){
+  if(quizState.answered) return;
+  quizState.answered = true;
+  const topic = CONTENT[currentSubject].topics[currentTopic];
+  const q = topic.quiz[quizState.index];
+  const correct = q.correct;
+
+  document.querySelectorAll('.option').forEach((btn, idx) => {
+    btn.disabled = true;
+    if(idx === correct) btn.classList.add('correct');
+    else if(idx === i && i !== correct) btn.classList.add('incorrect');
+  });
+
+  if(i === correct) quizState.score++;
+
+  const box = document.getElementById('explanationBox');
+  box.classList.remove('hidden');
+  box.innerHTML = `<strong>${i === correct ? 'Correct.' : 'Not quite.'}</strong> ${q.explain}`;
+
+  document.getElementById('quizProgress').textContent = `Question ${quizState.index+1} of ${topic.quiz.length} · Score ${quizState.score}`;
+  document.getElementById('nextBtn').classList.remove('hidden');
+}
+
+function nextQuestion(){
+  const topic = CONTENT[currentSubject].topics[currentTopic];
+  if(quizState.index < topic.quiz.length - 1){
+    quizState.index++;
+    renderQuestion();
+  } else {
+    showResults();
+  }
+}
+
+function showResults(){
+  const topic = CONTENT[currentSubject].topics[currentTopic];
+  const total = topic.quiz.length;
+  document.getElementById('resultsScore').textContent = `${quizState.score} / ${total}`;
+  let label = 'keep going — review and retake anytime';
+  if(quizState.score === total) label = 'perfect score';
+  else if(quizState.score / total >= 0.8) label = 'strong grasp of the material';
+  else if(quizState.score / total >= 0.5) label = 'solid start — worth a review';
+  document.getElementById('resultsLabel').textContent = label;
+  showView('view-results');
+}
+
+/* ---------------- Init ---------------- */
+loadProgress();
+goHome();
+</script>
+</body>
+</html>
